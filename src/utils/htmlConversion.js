@@ -8,9 +8,14 @@ export const convertHTMLToPNG = async (
   iframeRef,
   customSize = null
 ) => {
-  // Preprocess HTML for CSS compatibility (temporarily disabled for testing)
-  // const processedHTML = preprocessHTMLForConversion(htmlContent);
-  const processedHTML = htmlContent;
+  // Preprocess HTML for CSS compatibility (re-enabled for glassmorphism fallback)
+  console.log("=== CONVERSION DEBUG ===");
+  console.log("About to preprocess HTML for conversion...");
+  console.log("Original HTML length:", htmlContent.length);
+  const processedHTML = preprocessHTMLForConversion(htmlContent);
+  console.log("Processed HTML length:", processedHTML.length);
+  console.log("HTML preprocessing completed, proceeding with conversion...");
+  console.log("=== CONVERSION DEBUG COMPLETE ===");
   
   // Try using the iframe content first (this should work better)
   if (previewRef.current && iframeRef.current) {
