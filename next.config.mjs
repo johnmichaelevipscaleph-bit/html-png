@@ -2,11 +2,10 @@
 const nextConfig = {
   /* config options here */
   reactStrictMode: true,
-  // Externalize server-side dependencies (works with both webpack and Turbopack)
+  // Externalize only Puppeteer packages; bundle @sparticuz/chromium so its files are included in the function
   serverExternalPackages: [
     'puppeteer',
     'puppeteer-core',
-    '@sparticuz/chromium',
   ],
 };
 
