@@ -16,6 +16,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST,OPTIONS');
     return res.status(405).json({
       success: false,
       error: 'Method not allowed. Use POST.',
@@ -138,4 +139,14 @@ export default async function handler(req, res) {
     });
   }
 }
+
+// Ensure Node.js runtime on Vercel (not Edge) and allow larger JSON bodies
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '2mb',
+    },
+  },
+  runtime: 'nodejs',
+};
 
