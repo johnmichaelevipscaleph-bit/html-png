@@ -24,8 +24,10 @@ export default function HTMLInputSection({
   htmlContent,
   setHtmlContent,
   handleConvertToPng,
+  handleConvertToPngServer,
   handleDownloadPng,
   isConverting,
+  isServerConverting,
   error,
   convertedImageUrl,
 }) {
@@ -38,6 +40,13 @@ export default function HTMLInputSection({
       ? { width: customWidth, height: customHeight }
       : null;
     handleConvertToPng(customSize);
+  };
+
+  const handleConvertServerWithSize = () => {
+    const customSize = useCustomSize
+      ? { width: customWidth, height: customHeight }
+      : null;
+    handleConvertToPngServer(customSize);
   };
   return (
     <Card
@@ -223,14 +232,39 @@ export default function HTMLInputSection({
               }}
               transition="all 0.2s ease"
             >
-              Convert to PNG
+              Convert to PNG (Client)
+            </Button>
+
+            <Button
+              bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+              color="white"
+              onClick={handleConvertServerWithSize}
+              isLoading={isServerConverting}
+              loadingText="Converting (Server)..."
+              w="100%"
+              h={{ base: "44px", md: "48px" }}
+              borderRadius="8px"
+              fontWeight="500"
+              fontSize="sm"
+              _hover={{
+                bg: "linear-gradient(135deg, #764ba2 0%, #667eea 100%)",
+                transform: "translateY(-1px)",
+                boxShadow: "0 4px 12px rgba(102, 126, 234, 0.4)",
+              }}
+              _active={{
+                transform: "translateY(0)",
+              }}
+              transition="all 0.2s ease"
+              title="Uses Puppeteer - Supports backdrop-filter and modern CSS"
+            >
+              ✨ Convert to PNG (Server - Supports Blur)
             </Button>
 
             <Button
               bg="transparent"
               color="var(--accent)"
               onClick={handleDownloadPng}
-              isLoading={isConverting}
+              isLoading={isConverting || isServerConverting}
               loadingText="Downloading..."
               w="100%"
               h={{ base: "44px", md: "48px" }}

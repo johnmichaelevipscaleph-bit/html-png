@@ -28,8 +28,16 @@ export const preprocessCSS = (htmlContent) => {
     console.log("❌ No color-mix found!");
   }
   
-     // AGGRESSIVE: CSS-only glassmorphism with pseudo-elements
+     // Enhanced glassmorphism with proper blur support
      const beforeReplacement = htmlContent;
+     
+     // Extract backdrop-filter blur value if present
+     const blurMatch = htmlContent.match(/backdrop-filter:\s*blur\(([^)]+)\)/);
+     const blurValue = blurMatch ? blurMatch[1] : '30px';
+     
+     // Calculate a larger blur area to ensure proper coverage
+     const blurExpansion = '60px'; // Large enough to capture blur bleed
+     
      let processedHTML = htmlContent.replace(
        /\.content\s*\{[^}]*\}/g,
        `.content {
@@ -39,43 +47,31 @@ export const preprocessCSS = (htmlContent) => {
          box-sizing: border-box;
          display: flex;
          align-items: center;
-         background: 
-           radial-gradient(circle at 30% 20%, rgba(247, 152, 44, 0.3) 0%, transparent 50%),
-           radial-gradient(circle at 70% 80%, rgba(221, 170, 83, 0.2) 0%, transparent 50%),
-           linear-gradient(135deg,
-             rgba(247, 152, 44, 0.1) 0%,
-             rgba(247, 152, 44, 0.2) 30%,
-             rgba(221, 170, 83, 0.15) 70%,
-             rgba(247, 152, 44, 0.1) 100%
-           );
-         backdrop-filter: none;
-         -webkit-backdrop-filter: none;
+         background-color: rgba(247, 152, 44, 0.05);
+         backdrop-filter: blur(${blurValue});
+         -webkit-backdrop-filter: blur(${blurValue});
          border-radius: 56px 56px 0 0;
-         border: 1px solid rgba(255, 255, 255, 0.6);
+         border: 1px solid rgba(255, 255, 255, 0.5);
          border-bottom: none;
          margin: 0 40px;
-         box-shadow:
-           0 8px 32px rgba(0, 0, 0, 0.3),
-           inset 0 1px 0 rgba(255, 255, 255, 0.7),
-           inset 0 -1px 0 rgba(0, 0, 0, 0.2);
-         opacity: 0.85;
+         overflow: hidden;
+         isolation: isolate;
+       }
+       .wrapper {
+         position: relative;
+         z-index: 0;
        }
        .content::before {
          content: '';
          position: absolute;
-         top: 0;
-         left: 0;
-         right: 0;
-         bottom: 0;
-         background: 
-           repeating-linear-gradient(
-             45deg,
-             transparent,
-             transparent 2px,
-             rgba(255, 255, 255, 0.03) 2px,
-             rgba(255, 255, 255, 0.03) 4px
-           );
-         border-radius: inherit;
+         inset: -${blurExpansion};
+         background: var(--overlay-color), var(--imageurl);
+         background-size: cover;
+         background-position: center;
+         background-repeat: no-repeat;
+         filter: blur(${blurValue});
+         -webkit-filter: blur(${blurValue});
+         z-index: -1;
          pointer-events: none;
        }
        .content::after {
@@ -87,12 +83,13 @@ export const preprocessCSS = (htmlContent) => {
          bottom: 0;
          background: 
            linear-gradient(135deg,
-             rgba(255, 255, 255, 0.1) 0%,
+             rgba(255, 255, 255, 0.15) 0%,
              transparent 50%,
              rgba(0, 0, 0, 0.05) 100%
            );
          border-radius: inherit;
          pointer-events: none;
+         z-index: 1;
        }`
      );
   
@@ -108,11 +105,15 @@ export const preprocessCSS = (htmlContent) => {
     console.log("❌ After replacement - No .content class found!");
   }
   
-  // Also replace any remaining color-mix and backdrop-filter
+  // Replace color-mix (not supported in all browsers) but keep backdrop-filter
+  // backdrop-filter works in Puppeteer (Chromium), so we keep it enabled
   processedHTML = processedHTML
-    .replace(/color-mix\([^)]+\)/g, 'rgba(247, 152, 44, 0.2)')
-    .replace(/backdrop-filter:\s*[^;]+;/g, 'backdrop-filter: none;')
-    .replace(/-webkit-backdrop-filter:\s*[^;]+;/g, '-webkit-backdrop-filter: none;');
+    .replace(/color-mix\(in srgb,\s*var\(--primary-color\)\s+5%,\s*transparent\)/g, 'rgba(247, 152, 44, 0.05)')
+    .replace(/color-mix\(in srgb,\s*var\(--primary-color\)\s+([0-9]+)%,\s*transparent\)/g, (match, p1) => {
+      const opacity = parseInt(p1) / 100;
+      return `rgba(247, 152, 44, ${opacity * 0.2})`;
+    })
+    .replace(/color-mix\([^)]+\)/g, 'rgba(247, 152, 44, 0.2)');
 
   console.log("Final processed HTML length:", processedHTML.length);
   console.log("=== CSS PREPROCESSING COMPLETE ===");
@@ -125,45 +126,39 @@ export const addCSSFallbacks = (htmlContent) => {
   console.log("Adding CSS fallbacks...");
   console.log("HTML before fallbacks length:", htmlContent.length);
   
+         // Extract blur value for fallback
+         const blurMatch = htmlContent.match(/backdrop-filter:\s*blur\(([^)]+)\)/);
+         const blurValue = blurMatch ? blurMatch[1] : '30px';
+         
          const fallbackCSS = `
            <style id="conversion-fallbacks">
-             /* CSS-only glassmorphism with pseudo-elements */
+             /* Enhanced glassmorphism with blur support - using fixed positioning for reliable blur */
+             .wrapper {
+               position: relative !important;
+               z-index: 0 !important;
+             }
              .content {
-               background: 
-                 radial-gradient(circle at 30% 20%, rgba(247, 152, 44, 0.3) 0%, transparent 50%),
-                 radial-gradient(circle at 70% 80%, rgba(221, 170, 83, 0.2) 0%, transparent 50%),
-                 linear-gradient(135deg,
-                   rgba(247, 152, 44, 0.1) 0%,
-                   rgba(247, 152, 44, 0.2) 30%,
-                   rgba(221, 170, 83, 0.15) 70%,
-                   rgba(247, 152, 44, 0.1) 100%
-                 ) !important;
-               backdrop-filter: none !important;
-               -webkit-backdrop-filter: none !important;
-               border: 1px solid rgba(255, 255, 255, 0.6) !important;
+               background-color: rgba(247, 152, 44, 0.05) !important;
+               backdrop-filter: blur(${blurValue}) !important;
+               -webkit-backdrop-filter: blur(${blurValue}) !important;
+               border: 1px solid rgba(255, 255, 255, 0.5) !important;
                border-bottom: none !important;
-               box-shadow:
-                 0 8px 32px rgba(0, 0, 0, 0.3),
-                 inset 0 1px 0 rgba(255, 255, 255, 0.7),
-                 inset 0 -1px 0 rgba(0, 0, 0, 0.2) !important;
-               opacity: 0.85 !important;
+               overflow: hidden !important;
+               isolation: isolate !important;
+               position: relative !important;
+               z-index: 1 !important;
              }
              .content::before {
                content: '' !important;
                position: absolute !important;
-               top: 0 !important;
-               left: 0 !important;
-               right: 0 !important;
-               bottom: 0 !important;
-               background: 
-                 repeating-linear-gradient(
-                   45deg,
-                   transparent,
-                   transparent 2px,
-                   rgba(255, 255, 255, 0.03) 2px,
-                   rgba(255, 255, 255, 0.03) 4px
-                 ) !important;
-               border-radius: inherit !important;
+               inset: -60px !important;
+               background: var(--overlay-color), var(--imageurl) !important;
+               background-size: cover !important;
+               background-position: center !important;
+               background-repeat: no-repeat !important;
+               filter: blur(${blurValue}) !important;
+               -webkit-filter: blur(${blurValue}) !important;
+               z-index: -1 !important;
                pointer-events: none !important;
              }
              .content::after {
@@ -175,12 +170,13 @@ export const addCSSFallbacks = (htmlContent) => {
                bottom: 0 !important;
                background: 
                  linear-gradient(135deg,
-                   rgba(255, 255, 255, 0.1) 0%,
+                   rgba(255, 255, 255, 0.15) 0%,
                    transparent 50%,
                    rgba(0, 0, 0, 0.05) 100%
                  ) !important;
                border-radius: inherit !important;
                pointer-events: none !important;
+               z-index: 1 !important;
              }
            </style>
          `;

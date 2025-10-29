@@ -19,12 +19,14 @@ import PNGImageModal from "../components/PNGImageModal";
 
 // Import utilities
 import { convertHTMLToPNG, downloadPNG } from "../utils/htmlConversion";
+import { convertHTMLToPNGServer } from "../utils/serverConversion";
 import { createFontAwesomeSVG } from "../components/FontAwesomeIcons";
 
 export default function Home() {
   const [htmlContent, setHtmlContent] = useState("");
 
   const [isConverting, setIsConverting] = useState(false);
+  const [isServerConverting, setIsServerConverting] = useState(false);
 
   const [convertedImageUrl, setConvertedImageUrl] = useState("");
 
@@ -282,6 +284,49 @@ export default function Home() {
     }
   };
 
+  const handleConvertToPngServer = async (customSize = null) => {
+    setIsServerConverting(true);
+    setError("");
+    setConvertedImageUrl("");
+
+    try {
+      if (!htmlContent) {
+        throw new Error("Please enter HTML content first");
+      }
+
+      const options = customSize
+        ? {
+            width: customSize.width || 1080,
+            height: customSize.height || 1080,
+          }
+        : {};
+
+      const dataUrl = await convertHTMLToPNGServer(htmlContent, options);
+      setConvertedImageUrl(dataUrl);
+
+      toast({
+        title: "Success!",
+        description: "HTML converted to PNG successfully using Puppeteer (supports backdrop-filter)!",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (err) {
+      console.error("Server conversion error:", err);
+      setError(err.message);
+
+      toast({
+        title: "Error",
+        description: err.message || "Failed to convert HTML with server-side conversion.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setIsServerConverting(false);
+    }
+  };
+
   const handleDownloadPng = async () => {
     if (!convertedImageUrl) {
       toast({
@@ -406,8 +451,10 @@ export default function Home() {
                 htmlContent={htmlContent}
                 setHtmlContent={setHtmlContent}
                 handleConvertToPng={handleConvertToPng}
+                handleConvertToPngServer={handleConvertToPngServer}
                 handleDownloadPng={handleDownloadPng}
                 isConverting={isConverting}
+                isServerConverting={isServerConverting}
                 error={error}
                 convertedImageUrl={convertedImageUrl}
               />
