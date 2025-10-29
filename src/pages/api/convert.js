@@ -2,7 +2,7 @@
 // Uses Puppeteer which supports backdrop-filter and modern CSS
 
 // Import browser creation function
-const { createBrowser } = require("../../../api/browser");
+const { createBrowser } = require("../../utils/browser");
 
 // Next.js API route configuration for Vercel
 export const config = {
