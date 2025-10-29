@@ -1,7 +1,20 @@
 // Server-side conversion using Puppeteer (supports backdrop-filter and modern CSS)
 export const convertHTMLToPNGServer = async (htmlContent, options = {}) => {
   try {
-    const response = await fetch('/api/convert', {
+    // Dynamically determine the API URL based on the current origin
+    // This ensures it works in both development and production (Vercel)
+    const getApiUrl = () => {
+      // Check if we're in the browser
+      if (typeof window !== 'undefined') {
+        return `${window.location.origin}/api/convert`;
+      }
+      // For server-side rendering (unlikely but safe fallback)
+      return process.env.NEXT_PUBLIC_API_URL || '/api/convert';
+    };
+    
+    const apiUrl = getApiUrl();
+    
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
