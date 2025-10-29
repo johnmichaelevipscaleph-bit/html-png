@@ -14,10 +14,13 @@ export const convertHTMLToPNGServer = async (htmlContent, options = {}) => {
     
     const apiUrl = getApiUrl();
     
-    // Log the API URL for debugging (only in development)
-    if (process.env.NODE_ENV === 'development' || typeof window !== 'undefined') {
-      console.log('[Client] Calling API at:', apiUrl);
-    }
+    // Log the API URL for debugging
+    console.log('[Client] Calling API at:', apiUrl);
+    console.log('[Client] Request details:', {
+      method: 'POST',
+      url: apiUrl,
+      contentType: 'application/json',
+    });
     
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -26,6 +29,8 @@ export const convertHTMLToPNGServer = async (htmlContent, options = {}) => {
       },
       // Ensure credentials are not sent for CORS
       credentials: 'omit',
+      // Cache control to avoid caching issues
+      cache: 'no-store',
       body: JSON.stringify({
         htmlContent: htmlContent,
         options: {
@@ -41,17 +46,25 @@ export const convertHTMLToPNGServer = async (htmlContent, options = {}) => {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       const errorMessage = errorData.error || errorData.details || `Server error: ${response.status}`;
-      const errorWithDebug = errorData.debug 
-        ? `${errorMessage}\n\nDebug: ${errorData.debug}`
-        : errorMessage;
       
+      // Log full error details
       console.error('API Error Response:', {
         status: response.status,
-        errorData,
-        message: errorMessage,
+        errorData: JSON.stringify(errorData, null, 2),
+        receivedMethod: errorData.receivedMethod,
+        debug: errorData.debug,
       });
       
-      throw new Error(errorWithDebug);
+      // Build detailed error message
+      let errorDetails = errorMessage;
+      if (errorData.receivedMethod) {
+        errorDetails += ` (Received method: ${errorData.receivedMethod})`;
+      }
+      if (errorData.debug) {
+        errorDetails += `\n\nDebug info: ${JSON.stringify(errorData.debug, null, 2)}`;
+      }
+      
+      throw new Error(errorDetails);
     }
 
     const result = await response.json();

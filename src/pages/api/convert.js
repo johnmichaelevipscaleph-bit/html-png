@@ -5,12 +5,25 @@
 const { createBrowser } = require("../../../api/browser");
 
 export default async function handler(req, res) {
-  // Log the incoming request for debugging (only method and URL to avoid sensitive data)
-  console.log(`[API] Incoming request: ${req.method} ${req.url}`);
+  // Log detailed request info for debugging
+  const requestInfo = {
+    method: req.method,
+    url: req.url,
+    methodType: typeof req.method,
+    headers: {
+      'content-type': req.headers['content-type'],
+      'user-agent': req.headers['user-agent'],
+      'x-forwarded-method': req.headers['x-forwarded-method'],
+      'x-http-method-override': req.headers['x-http-method-override'],
+    },
+    hasBody: !!req.body,
+  };
+  
+  console.log(`[API] Request received:`, JSON.stringify(requestInfo, null, 2));
   
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'POST,GET,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   // Handle preflight OPTIONS request
@@ -20,14 +33,35 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Only allow POST method
-  if (req.method !== 'POST') {
-    console.log(`[API] Method not allowed: ${req.method}`);
-    res.setHeader('Allow', 'POST,OPTIONS');
+  // Allow GET for testing the endpoint is accessible
+  if (req.method === 'GET') {
+    return res.status(200).json({
+      success: true,
+      message: 'API endpoint is accessible',
+      method: 'GET',
+      availableMethods: ['POST', 'OPTIONS'],
+      timestamp: new Date().toISOString(),
+      requestInfo: requestInfo,
+    });
+  }
+
+  // Check for POST method (case-insensitive and check alternate headers)
+  const methodUpper = String(req.method || '').toUpperCase();
+  const isPost = methodUpper === 'POST' || 
+                 req.headers['x-http-method-override']?.toUpperCase() === 'POST' ||
+                 req.headers['x-forwarded-method']?.toUpperCase() === 'POST';
+
+  if (!isPost) {
+    console.log(`[API] Method not allowed. Received: "${req.method}" (${typeof req.method})`);
+    res.setHeader('Allow', 'POST,GET,OPTIONS');
     return res.status(405).json({
       success: false,
       error: 'Method not allowed. Use POST.',
       receivedMethod: req.method,
+      methodUpper: methodUpper,
+      methodType: typeof req.method,
+      availableMethods: ['POST', 'GET', 'OPTIONS'],
+      debug: requestInfo,
     });
   }
 
