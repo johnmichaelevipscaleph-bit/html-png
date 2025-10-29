@@ -1,8 +1,15 @@
 // Next.js API route for server-side HTML to PNG conversion
 // Uses Puppeteer which supports backdrop-filter and modern CSS
 
-// Import browser creation function
-const { createBrowser } = require("../../utils/browser");
+// Import browser creation function with error handling for build-time
+let createBrowser;
+try {
+  createBrowser = require("../../utils/browser").createBrowser;
+} catch (error) {
+  // Fallback if import fails during build (shouldn't happen, but safety check)
+  console.error("Failed to import browser helper:", error);
+  createBrowser = null;
+}
 
 // Next.js API route configuration for Vercel
 export const config = {
@@ -88,6 +95,16 @@ export default async function handler(req, res) {
   }
 
   console.log('[API] Processing POST request');
+
+  // Ensure createBrowser is available
+  if (!createBrowser) {
+    return res.status(500).json({
+      success: false,
+      error: 'Browser helper not available',
+      code: 'BROWSER_HELPER_ERROR',
+      timestamp: new Date().toISOString(),
+    });
+  }
 
   const startTime = Date.now();
   let browser = null;
