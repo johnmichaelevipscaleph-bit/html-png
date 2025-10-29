@@ -11,7 +11,6 @@ export const config = {
       sizeLimit: '2mb',
     },
     responseLimit: false,
-    externalResolver: true,
   },
 };
 
@@ -64,8 +63,15 @@ export default async function handler(req, res) {
 
   if (!isPost) {
     console.log(`[API] Method not allowed. Received: "${req.method}" (${typeof req.method})`);
-    res.setHeader('Allow', 'POST,GET,OPTIONS');
-    return res.status(405).json({
+    console.log(`[API] Full request object:`, {
+      method: req.method,
+      methodType: typeof req.method,
+      methodValue: req.method,
+      allHeaders: req.headers,
+    });
+    
+    // Ensure JSON response is sent
+    const errorResponse = {
       success: false,
       error: 'Method not allowed. Use POST.',
       receivedMethod: req.method,
@@ -73,7 +79,12 @@ export default async function handler(req, res) {
       methodType: typeof req.method,
       availableMethods: ['POST', 'GET', 'OPTIONS'],
       debug: requestInfo,
-    });
+      timestamp: new Date().toISOString(),
+    };
+    
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Allow', 'POST,GET,OPTIONS');
+    return res.status(405).json(errorResponse);
   }
 
   console.log('[API] Processing POST request');

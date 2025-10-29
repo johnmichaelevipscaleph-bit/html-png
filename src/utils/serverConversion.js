@@ -44,13 +44,28 @@ export const convertHTMLToPNGServer = async (htmlContent, options = {}) => {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      // Try to get response as text first to see what we're actually getting
+      const responseText = await response.text();
+      console.error('API Error Response (raw):', responseText);
+      
+      let errorData = {};
+      try {
+        errorData = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Failed to parse error response as JSON:', e);
+        console.error('Response text was:', responseText);
+      }
+      
       const errorMessage = errorData.error || errorData.details || `Server error: ${response.status}`;
       
       // Log full error details
       console.error('API Error Response:', {
         status: response.status,
-        errorData: JSON.stringify(errorData, null, 2),
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        errorData: errorData,
+        errorDataString: JSON.stringify(errorData, null, 2),
+        rawResponse: responseText,
         receivedMethod: errorData.receivedMethod,
         debug: errorData.debug,
       });
