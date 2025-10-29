@@ -21,10 +21,12 @@
     "html-to-image": "^1.11.13",
     "html2canvas": "^1.4.1",
     "next": "^16.0.0",
-    "puppeteer": "^21.11.0",
     "puppeteer-core": "^21.11.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
+  },
+  "optionalDependencies": {
+    "puppeteer": "^21.11.0"
   },
   "devDependencies": {
     "eslint": "^9",
