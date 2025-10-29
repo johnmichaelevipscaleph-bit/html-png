@@ -5,23 +5,33 @@
 const { createBrowser } = require("../../../api/browser");
 
 export default async function handler(req, res) {
+  // Log the incoming request for debugging (only method and URL to avoid sensitive data)
+  console.log(`[API] Incoming request: ${req.method} ${req.url}`);
+  
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
+  // Handle preflight OPTIONS request
   if (req.method === 'OPTIONS') {
+    console.log('[API] Handling OPTIONS preflight');
     res.status(200).end();
     return;
   }
 
+  // Only allow POST method
   if (req.method !== 'POST') {
+    console.log(`[API] Method not allowed: ${req.method}`);
     res.setHeader('Allow', 'POST,OPTIONS');
     return res.status(405).json({
       success: false,
       error: 'Method not allowed. Use POST.',
+      receivedMethod: req.method,
     });
   }
+
+  console.log('[API] Processing POST request');
 
   const startTime = Date.now();
   let browser = null;
@@ -140,13 +150,14 @@ export default async function handler(req, res) {
   }
 }
 
-// Ensure Node.js runtime on Vercel (not Edge) and allow larger JSON bodies
+// Configure for Vercel: Use Node.js runtime and allow larger bodies
+// For Next.js Pages Router, we use the simpler config format
 export const config = {
   api: {
     bodyParser: {
       sizeLimit: '2mb',
     },
+    responseLimit: false,
   },
-  runtime: 'nodejs',
 };
 

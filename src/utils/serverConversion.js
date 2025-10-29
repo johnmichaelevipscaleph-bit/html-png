@@ -14,11 +14,18 @@ export const convertHTMLToPNGServer = async (htmlContent, options = {}) => {
     
     const apiUrl = getApiUrl();
     
+    // Log the API URL for debugging (only in development)
+    if (process.env.NODE_ENV === 'development' || typeof window !== 'undefined') {
+      console.log('[Client] Calling API at:', apiUrl);
+    }
+    
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      // Ensure credentials are not sent for CORS
+      credentials: 'omit',
       body: JSON.stringify({
         htmlContent: htmlContent,
         options: {

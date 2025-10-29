@@ -2,7 +2,8 @@
   "functions": {
     "src/pages/api/convert.js": {
       "maxDuration": 30,
-      "memory": 1024
+      "memory": 1024,
+      "runtime": "@vercel/node"
     }
   },
   "env": {
