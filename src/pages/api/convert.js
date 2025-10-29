@@ -173,14 +173,17 @@ export default async function handler(req, res) {
       ? error.stack 
       : errorMessage;
 
-    res.status(500).json({
-      success: false,
-      error: 'Failed to convert HTML to PNG',
-      details: errorMessage,
-      debug: process.env.NODE_ENV === 'development' ? errorDetails : undefined,
-      code: 'CONVERSION_FAILED',
-      timestamp: new Date().toISOString(),
-    });
+    // Ensure we send a response
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to convert HTML to PNG',
+        details: errorMessage,
+        debug: process.env.NODE_ENV === 'development' ? errorDetails : undefined,
+        code: 'CONVERSION_FAILED',
+        timestamp: new Date().toISOString(),
+      });
+    }
   }
 }
 
@@ -192,6 +195,7 @@ export const config = {
       sizeLimit: '2mb',
     },
     responseLimit: false,
+    externalResolver: true,
   },
 };
 
