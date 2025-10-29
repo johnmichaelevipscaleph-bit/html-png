@@ -4,6 +4,17 @@
 // Import browser creation function
 const { createBrowser } = require("../../../api/browser");
 
+// Next.js API route configuration for Vercel
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '2mb',
+    },
+    responseLimit: false,
+    externalResolver: true,
+  },
+};
+
 export default async function handler(req, res) {
   // Log detailed request info for debugging
   const requestInfo = {
@@ -187,15 +198,4 @@ export default async function handler(req, res) {
   }
 }
 
-// Configure for Vercel: Use Node.js runtime and allow larger bodies
-// For Next.js Pages Router, we use the simpler config format
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '2mb',
-    },
-    responseLimit: false,
-    externalResolver: true,
-  },
-};
 
